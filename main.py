@@ -48,10 +48,8 @@ def startOrRestartTheGame():
 
 def restartGame():
     global matrix, Game, turn, sign, oppontentSign, playerFirst, numberOfMoves
-
     # Reset the matrix to empty cells
     matrix = [["", "", ""], ["", "", ""], ["", "", ""]]
-
     # Reset all buttons to empty and re-enable them
     for row in range(3):
         for col in range(3):
@@ -80,7 +78,6 @@ def endGame():
 def checkResult(choice, sign):
     positionR, positionC = choice
     matrix[positionR][positionC] = sign
-
     if (matrix[0][0] == matrix[0][1] == matrix[0][2] == "X"):
         Game = False
     elif (matrix[0][0] == matrix[0][1] == matrix[0][2] == "O"):
@@ -118,12 +115,10 @@ def checkResult(choice, sign):
     return Game
 
 def playTheGame():
-    #pdb.set_trace()
     global Game, playerFirst, sign, oppontentSign, turn, numberOfMoves
     if numberOfMoves == 0:
         playerFirst = firstToPlay.get()  # Get who plays first (1 for Player 1, 0 for Player 2)
         sign = Sign.get()
-
     if signChoice == 1: # X
         sign = "X"
         oppontentSign = "O" 
@@ -133,7 +128,6 @@ def playTheGame():
             if playerFirst == 1: #wait for the opponent to click
                 Game = False
                 playerFirst = 0
-                print('we are here')
             else:
                 playerFirst = 1
                 choice = chooseRandomNumber()
@@ -142,14 +136,15 @@ def playTheGame():
                 if Game == False:
                     scoreLabel.config(text="You lost dear!")
                     endGame()
-                elif Game and numberOfMoves == 5:
+                elif Game and numberOfMoves == 4:
                     scoreLabel.config(text="DRAW-No6")
                     endGame()
     elif signChoice == 2: # O
         sign = "O"
         oppontentSign = "X"  
+        turn = 0
         while (Game == True):
-            print(playerFirst)
+            turn = turn + 1
             if playerFirst == 1: #wait for the opponent to click
                 Game = False
                 playerFirst = 0
@@ -198,27 +193,16 @@ signChoice = Sign.get()
 playerFirst = firstToPlay.get()
 
 def on_click(r, c, sign):
+   
     current = buttons[r][c].cget("text")
     if current == "":
         buttons[r][c].config(text=oppontentSign)
         choice = r,c
         global turn, Game, playerFirst, numberOfMoves
         numberOfMoves = numberOfMoves + 1
-        if (turn % 2 != 0) and playerFirst:
-            Game = checkResult(choice, sign)
-            if Game and numberOfMoves == 4:
-                print("DRAW!-No1")
-                endGame()
-                scoreLabel.config(text="DRAW!")    
-            elif Game == False:
-                scoreLabel.config(text="You win!")
-                endGame()
-            playerFirst = 0
-            playTheGame()
-        elif (turn % 2 == 0) and playerFirst:
+        if (turn % 2 == 0) and playerFirst:
             Game = checkResult(choice, oppontentSign)
             if Game and numberOfMoves == 4:
-                print("DRAW!-No2")
                 scoreLabel.config(text="DRAW!")
                 endGame()  
             elif Game == False:
@@ -226,26 +210,12 @@ def on_click(r, c, sign):
                 endGame()
             playerFirst = 0
             playTheGame()
-        elif (turn % 2 != 0) and (playerFirst == 0):
-            Game = checkResult(choice, sign)
-            if Game and numberOfMoves == 5:
-                print("DRAW!-No3")
-                scoreLabel.config(text="DRAW!")
-                endGame()
-            elif Game == False:
-                print("You win!")
-                scoreLabel.config(text="You win!")
-                endGame()
-            playerFirst = 0
-            playTheGame()
         elif (turn % 2 == 0) and (playerFirst == 0):
             Game = checkResult(choice, oppontentSign)
             if Game and numberOfMoves == 5:
-                print("DRAW!-No4")
                 scoreLabel.config(text="DRAW!")
                 endGame()
-                restartGame()
-                
+                restartGame()  
             elif Game == False:
                 print("You win!")
                 scoreLabel.config(text="You win!")
