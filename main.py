@@ -19,6 +19,7 @@ matrix = [
     [7, 8, 9]   # Row 3
 ]
 Game = True
+numberOfMoves = 0
 
 def chooseRandomNumber():
     randomRaw = random.randint(0,2)
@@ -29,11 +30,7 @@ def chooseRandomNumber():
         randomRaw = random.randint(0,2)
         randomColumn = random.randint(0,2)
         matrixPosition = (randomRaw, randomColumn)
-    print(matrixPosition)
     return matrixPosition
-
-def isChoiseAlreadyThere(choice):
-    print("isChoiseAlreadyThere")
     
 def placeInBoard(choice, sign):
     raw, column = choice
@@ -41,12 +38,48 @@ def placeInBoard(choice, sign):
     if current == "":
         buttons[raw][column].config(text=sign)
     else:
-        pass
+        scoreLabel.config(text="You lost dear!")
 
+def startOrRestartTheGame():
+    if Game == False:
+        restartGame()
+    else:
+        playTheGame()
+
+def restartGame():
+    global matrix, Game, turn, sign, oppontentSign, playerFirst, numberOfMoves
+
+    # Reset the matrix to empty cells
+    matrix = [["", "", ""], ["", "", ""], ["", "", ""]]
+
+    # Reset all buttons to empty and re-enable them
+    for row in range(3):
+        for col in range(3):
+            buttons[row][col].config(text="", state="normal")
+    # Reset game variables
+    Game = True
+    turn = 0  # Reset turn counter
+    playerFirst = firstToPlay.get()  # Assume Player 1 starts
+    if signChoice == 1: # X
+        sign = "X"
+        oppontentSign = "O" 
+    else:
+        sign = "O"
+        oppontentSign = "X" 
+    numberOfMoves = 0
+    print("Game restarted.")
+
+def disableButtons():
+    for row in range(3):
+        for col in range(3):
+            buttons[row][col].config(state="disabled")  # Disable each button
+
+def endGame():
+    disableButtons()
+    
 def checkResult(choice, sign):
     positionR, positionC = choice
     matrix[positionR][positionC] = sign
-    print(f'CheckResult:{sign}')
 
     if (matrix[0][0] == matrix[0][1] == matrix[0][2] == "X"):
         Game = False
@@ -64,9 +97,9 @@ def checkResult(choice, sign):
         Game = False
     elif (matrix[0][0] == matrix[1][0] == matrix[2][0] == "O"):
         Game = False
-    elif (matrix[0][1] == matrix[1][1] == matrix[1][2] == "X"):
+    elif (matrix[0][1] == matrix[1][1] == matrix[2][1] == "X"):
         Game = False
-    elif (matrix[0][1] == matrix[1][1] == matrix[1][2] == "O"):
+    elif (matrix[0][1] == matrix[1][1] == matrix[2][1] == "O"):
         Game = False
     elif (matrix[0][2] == matrix[1][2] == matrix[2][2] == "X"):
         Game = False
@@ -86,48 +119,51 @@ def checkResult(choice, sign):
 
 def playTheGame():
     #pdb.set_trace()
-    global Game 
-    global playerFirst
+    global Game, playerFirst, sign, oppontentSign, turn, numberOfMoves
+    if numberOfMoves == 0:
+        playerFirst = firstToPlay.get()  # Get who plays first (1 for Player 1, 0 for Player 2)
+        sign = Sign.get()
 
     if signChoice == 1: # X
-        print("Player choice is X")
-        global sign 
         sign = "X"
-        global oppontentSign
         oppontentSign = "O" 
-        global turn
         turn = 0
         while (Game == True):
             turn = turn + 1
-            print(playerFirst)
             if playerFirst == 1: #wait for the opponent to click
-                print("Wait for you to play")
                 Game = False
                 playerFirst = 0
+                print('we are here')
             else:
                 playerFirst = 1
                 choice = chooseRandomNumber()
-                print(choice)
                 placeInBoard(choice, sign)
                 Game = checkResult(choice, sign)
-                print("Player will wait for opponent")
+                if Game == False:
+                    scoreLabel.config(text="You lost dear!")
+                    endGame()
+                elif Game and numberOfMoves == 5:
+                    scoreLabel.config(text="DRAW-No6")
+                    endGame()
     elif signChoice == 2: # O
-        print("Player's choise is O")
         sign = "O"
         oppontentSign = "X"  
         while (Game == True):
             print(playerFirst)
             if playerFirst == 1: #wait for the opponent to click
-                print("Wait for you to play")
                 Game = False
                 playerFirst = 0
             else:
                 playerFirst = 1
                 choice = chooseRandomNumber()
-                print(choice)
                 placeInBoard(choice, oppontentSign)
                 Game = checkResult(choice, oppontentSign)
-                print("Player will wait for opponent")             
+                if Game == False:
+                    endGame()
+                    scoreLabel.config(text="You lost dear!")
+                elif Game and numberOfMoves == 4:
+                    scoreLabel.config(text="DRAW-No7")
+                    endGame()       
 
 # Configure grid columns to expand
 for i in range(8):
@@ -153,7 +189,7 @@ scoreLabel.grid(row=1, column=0, sticky='w', padx=5, pady=5)
 
 # Start/Restart button
 startRestartButton = tkinter.Button(text = "Start/Restart", font=("Calibri", 10, "bold"),
-                                     command = playTheGame, bg="#D9EAFD")
+                                     command = startOrRestartTheGame, bg="#D9EAFD")
 startRestartButton.grid(row=1, column=5, pady=5,padx=5,sticky='e')
 
 # 3x3 grid of buttons
@@ -162,33 +198,58 @@ signChoice = Sign.get()
 playerFirst = firstToPlay.get()
 
 def on_click(r, c, sign):
-    #sign = sign
-    #choice = r,c
     current = buttons[r][c].cget("text")
     if current == "":
         buttons[r][c].config(text=oppontentSign)
         choice = r,c
-        global turn
-        global Game
-        global playerFirst 
+        global turn, Game, playerFirst, numberOfMoves
+        numberOfMoves = numberOfMoves + 1
         if (turn % 2 != 0) and playerFirst:
             Game = checkResult(choice, sign)
-            print(f'Game is: {Game}')
+            if Game and numberOfMoves == 4:
+                print("DRAW!-No1")
+                endGame()
+                scoreLabel.config(text="DRAW!")    
+            elif Game == False:
+                scoreLabel.config(text="You win!")
+                endGame()
             playerFirst = 0
             playTheGame()
         elif (turn % 2 == 0) and playerFirst:
             Game = checkResult(choice, oppontentSign)
-            print(f'Game is: {Game}')
+            if Game and numberOfMoves == 4:
+                print("DRAW!-No2")
+                scoreLabel.config(text="DRAW!")
+                endGame()  
+            elif Game == False:
+                scoreLabel.config(text="You win!")
+                endGame()
             playerFirst = 0
             playTheGame()
         elif (turn % 2 != 0) and (playerFirst == 0):
             Game = checkResult(choice, sign)
-            print(f'Game is: {Game}')
+            if Game and numberOfMoves == 5:
+                print("DRAW!-No3")
+                scoreLabel.config(text="DRAW!")
+                endGame()
+            elif Game == False:
+                print("You win!")
+                scoreLabel.config(text="You win!")
+                endGame()
             playerFirst = 0
             playTheGame()
         elif (turn % 2 == 0) and (playerFirst == 0):
             Game = checkResult(choice, oppontentSign)
-            print(f'Game is: {Game}')
+            if Game and numberOfMoves == 5:
+                print("DRAW!-No4")
+                scoreLabel.config(text="DRAW!")
+                endGame()
+                restartGame()
+                
+            elif Game == False:
+                print("You win!")
+                scoreLabel.config(text="You win!")
+                endGame()
             playerFirst = 0
             playTheGame()
     
